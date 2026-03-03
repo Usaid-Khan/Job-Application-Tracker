@@ -21,6 +21,7 @@ const JobSchema = new mongoose.Schema(
         note: {type: String, trim: true, default: '', maxlength: 1000},
         documents: [documentSchema],
         reminderDate: {type: Date},
+        reminderSent: {type: Boolean, default: false},
     },
     {timestamps: true}
 )
