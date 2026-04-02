@@ -1,4 +1,6 @@
 import Job from "../models/Job.js";
+import { uploadImage } from "../utils/fileUpload.js";
+import fs from "fs";
 
 // @desc    Get all jobs (Admin: all, User: only assigned jobs)
 // @route   GET /api/jobs
@@ -80,9 +82,9 @@ export const getJobById = async (req, res) => {
 // @access  Private
 export const createJob = async (req, res) => {
     try {
-        const { company, position, jobLink, dateApplied, contactPerson, status, note, documents, reminderDate } = req.body;
+        const { company, position, jobLink, dateApplied, contactPerson, status, note, reminderDate } = req.body;
 
-        // ── Validate required fields
+        // Validate required fields
         if (!company || !position) {
             return res.status(400).json({
                 success: false,
@@ -99,9 +101,30 @@ export const createJob = async (req, res) => {
             contactPerson,
             status,
             note,
-            documents,
-            reminderDate
+            reminderDate,
+            documents: []
         });
+
+        // If file is uploaded
+        if (req.file) {
+            const uploadFile = await uploadImage("files", req.file.path);
+
+            if (uploadFile.secure_url) {
+                fs.unlink(req.file.path, (err) => {
+                    if (err) {
+                        return err;
+                    }
+                })
+            }
+
+            job.documents.push({
+                name: req.file.originalname,
+                url: uploadFile.secure_url,
+                type: req.body.type || "other"
+            });
+        }
+
+        await job.save();
 
         res.status(201).json({ message: "Job created successfully", job });
     } catch (error) {
@@ -137,28 +160,28 @@ export const updateJob = async (req, res) => {
 // @route   DELETE /api/jobs/:id
 // @access  Private
 export const deleteJob = async (req, res) => {
-  try {
-    const job = await Job.findById(req.params.id);
+    try {
+        const job = await Job.findById(req.params.id);
 
-    if (!job) {
-      return res.status(404).json({ message: "Job not found" });
+        if (!job) {
+            return res.status(404).json({ message: "Job not found" });
+        }
+
+        // Ownership or admin check
+        if (
+            job.userId.toString() !== req.user._id.toString() &&
+            req.user.role !== "ADMIN"
+        ) {
+            return res.status(403).json({ message: "Not authorized" });
+        }
+
+        await job.deleteOne();
+
+        res.status(200).json({ message: "Job deleted successfully" });
+
+    } catch (error) {
+        res.status(500).json({ message: "Server error", error: error.message });
     }
-
-    // Ownership or admin check
-    if (
-      job.userId.toString() !== req.user._id.toString() &&
-      req.user.role !== "ADMIN"
-    ) {
-      return res.status(403).json({ message: "Not authorized" });
-    }
-
-    await job.deleteOne();
-
-    res.status(200).json({ message: "Job deleted successfully" });
-
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
 };
 
 // @desc    Update job status
@@ -198,11 +221,10 @@ export const updateJobStatus = async (req, res) => {
 // @access  Private
 export const addDocument = async (req, res) => {
     try {
-        const { name, url, type } = req.body;
-        if (!name || !url) {
+        if (!req.file) {
             return res.status(400).json({
                 success: false,
-                message: "Document name and url are required.",
+                message: "File document is required.",
             });
         }
 
@@ -218,7 +240,23 @@ export const addDocument = async (req, res) => {
             });
         }
 
-        job.documents.push({ name, url, type: type || "other" });
+        const uploadFile = await uploadImage("files", req.file.path);
+        console.log(uploadFile);
+
+        if (uploadFile.secure_url) {
+            fs.unlink(req.file.path, (err) => {
+                if (err) {
+                    return err;
+                }
+            })
+        }
+
+        job.documents.push({
+            name: req.file.originalname,
+            url: uploadFile.secure_url,
+            type: req.body.type || "other"
+        });
+
         await job.save();
 
         res.status(201).json({
