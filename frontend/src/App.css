@@ -182,3 +182,7 @@
     border-right-color: var(--border);
   }
 }
+
+.btnBg {
+  background-color: bg-gradient-to-r from-blue-600 to-yellow-500;
+}
