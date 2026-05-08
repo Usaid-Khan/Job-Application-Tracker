@@ -3,13 +3,14 @@ import Job from "../models/Job.js";
 import User from "../models/User.js";
 import { sendEmail } from "../utils/sendEmail.js";
 
-cron.schedule("*/30 * * * *", async () => {
-    console.log("Checking reminders...");
+cron.schedule("* * * * *", async () => {
+    console.log(`[${new Date().toISOString()}] Checking for reminders...`);
 
     const now = new Date();
+    const in30Minutes = new Date(now.getTime() + 30 * 60 * 1000);
 
     const jobs = await Job.find({
-        reminderDate: { $lte: now },
+        reminderDate: { $lte: in30Minutes },
         reminderSent: false
     });
 
@@ -21,7 +22,7 @@ cron.schedule("*/30 * * * *", async () => {
         await sendEmail(
             user.email,
             `Reminder: ${job.position} at ${job.company}`,
-            `Hello ${user.name},
+            `Hello ${user.username},
 
 This is a reminder for your job application.
 

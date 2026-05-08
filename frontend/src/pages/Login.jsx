@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Mail, Lock, ArrowRight, Loader, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Loader, Eye, EyeOff, Briefcase } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -20,7 +21,7 @@ export default function Login() {
       const { data } = await axios.post('/api/auth/login', { email, password });
       // Assuming backend sends a token or session
       localStorage.setItem('token', data.token);
-      navigate('/jobs');
+      navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'Invalid credentials. Please try again.');
     } finally {
@@ -29,12 +30,23 @@ export default function Login() {
   };
 
   return (
-    <div className="flex-grow flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="glass-card p-8 bg-gray-900">
-          <div className="mb-8 text-center">
-            <h1 className="text-3xl font-bold mb-2">Welcome Back</h1>
-            <p className="text-slate-400">Sign in to manage your applications</p>
+    <div className="flex-grow flex items-center justify-center p-4 bg-[#0f172a] relative overflow-hidden">
+      {/* Abstract Background Elements */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/10 rounded-full blur-[120px]" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/5 rounded-full blur-[120px]" />
+
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-md z-10"
+      >
+        <div className="glass-card p-10 bg-slate-950/80 border border-white/10 shadow-2xl">
+          <div className="mb-10 text-center">
+            <div className="inline-flex p-4 rounded-2xl bg-blue-600/10 mb-6 text-blue-500">
+              <Briefcase className="w-10 h-10" />
+            </div>
+            <h1 className="text-4xl font-bold text-white mb-3">Welcome Back</h1>
+            <p className="text-slate-400">Sign in to manage your career journey</p>
           </div>
 
           {error && (
@@ -115,7 +127,7 @@ export default function Login() {
             </Link>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

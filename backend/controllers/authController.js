@@ -12,7 +12,7 @@ export const generateToken = (userId) => {
 // @access  Public
 export const registerUser = async (req, res) => {
     try {
-        const {username, email, password, profileImageUrl, adminInviteToken} = req.body;
+        const {username, email, password, profileImageUrl, careerPreferences, adminInviteToken} = req.body;
 
         // Check if user already exists
         const userExists = await User.findOne({email});
@@ -36,6 +36,7 @@ export const registerUser = async (req, res) => {
             email,
             password: hashedPassword,
             profileImageUrl,
+            careerPreferences,
             role
         });
 
@@ -113,6 +114,8 @@ export const updateUserProfile = async (req, res) => {
 
         user.username = req.body.username || user.username;
         user.email = req.body.email || user.email;
+        user.careerPreferences = req.body.careerPreferences || user.careerPreferences;
+        user.profileImageUrl = req.body.profileImageUrl || user.profileImageUrl;
 
         if(req.body.password) {
             const salt = await bcrypt.genSalt(10);
@@ -125,6 +128,8 @@ export const updateUserProfile = async (req, res) => {
             _id: updatedUser._id,
             username: updatedUser.username,
             email: updatedUser.email,
+            careerPreferences: updatedUser.careerPreferences,
+            profileImageUrl: updatedUser.profileImageUrl,
             role: updatedUser.role,
             token: generateToken(updatedUser._id)
         });

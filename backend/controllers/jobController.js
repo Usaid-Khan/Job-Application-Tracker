@@ -304,59 +304,59 @@ export const deleteDocument = async (req, res) => {
 // @desc    Dashboard data (Admin-only)
 // @route   GET /api/jobs/dashboard-data
 // @access  Private
-export const getDashboardData = async (req, res) => {
-    try {
-        // Total applications
-        const totalApplications = await Job.countDocuments();
+// export const getDashboardData = async (req, res) => {
+//     try {
+//         // Total applications
+//         const totalApplications = await Job.countDocuments();
 
-        // Status breakdown
-        const statusStats = await Job.aggregate([
-            {
-                $group: {
-                    _id: "$status",
-                    count: { $sum: 1 },
-                },
-            },
-        ]);
+//         // Status breakdown
+//         const statusStats = await Job.aggregate([
+//             {
+//                 $group: {
+//                     _id: "$status",
+//                     count: { $sum: 1 },
+//                 },
+//             },
+//         ]);
 
-        // Monthly applications (last 6 months)
-        const monthlyStats = await Job.aggregate([
-            {
-                $match: {
-                    createdAt: {
-                        $gte: new Date(new Date().setMonth(new Date().getMonth() - 6)),
-                    },
-                },
-            },
-            {
-                $group: {
-                    _id: {
-                        year: { $year: "$createdAt" },
-                        month: { $month: "$createdAt" },
-                    },
-                    count: { $sum: 1 },
-                },
-            },
-            { $sort: { "_id.year": 1, "_id.month": 1 } },
-        ]);
+//         // Monthly applications (last 6 months)
+//         const monthlyStats = await Job.aggregate([
+//             {
+//                 $match: {
+//                     createdAt: {
+//                         $gte: new Date(new Date().setMonth(new Date().getMonth() - 6)),
+//                     },
+//                 },
+//             },
+//             {
+//                 $group: {
+//                     _id: {
+//                         year: { $year: "$createdAt" },
+//                         month: { $month: "$createdAt" },
+//                     },
+//                     count: { $sum: 1 },
+//                 },
+//             },
+//             { $sort: { "_id.year": 1, "_id.month": 1 } },
+//         ]);
 
-        // Success rate
-        const offers = await Job.countDocuments({ status: "Offer" });
-        const successRate =
-            totalApplications === 0
-                ? 0
-                : ((offers / totalApplications) * 100).toFixed(2);
+//         // Success rate
+//         const offers = await Job.countDocuments({ status: "Offer" });
+//         const successRate =
+//             totalApplications === 0
+//                 ? 0
+//                 : ((offers / totalApplications) * 100).toFixed(2);
 
-        res.json({
-            totalApplications,
-            successRate,
-            statusStats,
-            monthlyStats,
-        });
-    } catch (error) {
-        res.status(500).json({ message: "Server error", error: error.message });
-    }
-}
+//         res.json({
+//             totalApplications,
+//             successRate,
+//             statusStats,
+//             monthlyStats,
+//         });
+//     } catch (error) {
+//         res.status(500).json({ message: "Server error", error: error.message });
+//     }
+// }
 
 // @desc    Dashboard data (User-specific)
 // @route   GET /api/jobs/user-dashboard-data
@@ -374,7 +374,7 @@ export const getUserDashboardData = async (req, res) => {
         // Status breakdown
         const statusStats = await Job.aggregate([
             {
-                $match: { userId, isArchived: false },
+                $match: { userId },
             },
             {
                 $group: {
@@ -389,7 +389,6 @@ export const getUserDashboardData = async (req, res) => {
             {
                 $match: {
                     userId,
-                    isArchived: false,
                     createdAt: {
                         $gte: new Date(
                             new Date().setMonth(new Date().getMonth() - 6)
@@ -413,7 +412,6 @@ export const getUserDashboardData = async (req, res) => {
         const offers = await Job.countDocuments({
             userId,
             status: "Offer",
-            isArchived: false,
         });
 
         const successRate =
@@ -431,3 +429,40 @@ export const getUserDashboardData = async (req, res) => {
         res.status(500).json({ message: "Server error", error: error.message });
     }
 }
+
+// @desc    Set or update reminder for a job application
+// @route   PUT /api/jobs/:id/reminder
+// @access  Private
+export const setReminder = async (req, res) => {
+    try {
+        const { reminderDate } = req.body;
+
+        if (!reminderDate) {
+            return res.status(400).json({ success: false, message: "Reminder date is required." });
+        }
+
+        const job = await Job.findById(req.params.id);
+
+        if (!job) {
+            return res.status(404).json({ success: false, message: "Job application not found." });
+        }
+
+        // Authorization check
+        if (job.userId.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ success: false, message: "Not authorized to modify this job application." });
+        }
+
+        job.reminderDate = new Date(reminderDate);
+        job.reminderSent = false; // Reset so cron can pick it up
+
+        await job.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Reminder set successfully.",
+            reminderDate: job.reminderDate,
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+};

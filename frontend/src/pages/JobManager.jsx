@@ -1,12 +1,45 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
-import { Briefcase, Loader, LogOut, FileUp } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Briefcase, Loader, FileUp, Sparkles, AlertCircle } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
 
 export default function JobManager() {
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState('create'); // 'create' | 'update'
   const [jobId, setJobId] = useState('');
   
+  useEffect(() => {
+    if (location.state?.jobId) {
+      setJobId(location.state.jobId);
+      setActiveTab('update');
+      fetchJobDetails(location.state.jobId);
+    }
+  }, [location.state]);
+
+  const fetchJobDetails = async (id) => {
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`/api/jobs/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setFormData({
+        company: res.data.company || '',
+        position: res.data.position || '',
+        jobLink: res.data.jobLink || '',
+        status: res.data.status || 'Applied',
+        contactPerson: res.data.contactPerson || '',
+        note: res.data.note || ''
+      });
+    } catch (err) {
+      setMessage('Could not load job details.');
+      setMessageType('error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // State matching backend model
   const [formData, setFormData] = useState({
     company: '',
@@ -93,6 +126,8 @@ export default function JobManager() {
         if(fileInputRef.current) fileInputRef.current.value = "";
       }
       setMessageType('success');
+      // Navigate to dashboard after success
+      setTimeout(() => navigate('/dashboard'), 1500);
     } catch (err) {
       if (err.response?.status === 401) {
         handleLogout();
@@ -106,18 +141,21 @@ export default function JobManager() {
 
   return (
     <div className="flex-grow container mx-auto px-4 py-12 flex justify-center">
-      <div className="w-full max-w-2xl">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-2xl"
+      >
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-white flex items-center gap-2">
-              <Briefcase className="w-8 h-8 text-primary" />
-              Manage Jobs
+            <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+              <div className="bg-primary/20 p-2 rounded-xl">
+                <Briefcase className="w-6 h-6 text-primary" />
+              </div>
+              {activeTab === 'create' ? 'Add Application' : 'Edit Application'}
             </h1>
-            <p className="text-slate-300 mt-1">Create or update your job applications</p>
+            <p className="text-slate-400 mt-1">Keep your job search organized and up to date.</p>
           </div>
-          <button onClick={handleLogout} className="text-slate-400 hover:text-white transition-colors hover:cursor-pointer" title="Logout">
-            <LogOut className="w-6 h-6" />
-          </button>
         </div>
 
         <div className="glass-card overflow-hidden">
@@ -141,7 +179,7 @@ export default function JobManager() {
             </button>
           </div>
 
-          <div className="p-8 bg-gray-900">
+          <div className="p-8 bg-[#020617]/40">
             {message && (
               <div className={`mb-6 p-4 rounded-lg border text-sm ${
                 messageType === 'error' ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-green-500/10 border-green-500/20 text-green-400'
@@ -276,7 +314,7 @@ export default function JobManager() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="btn-primary w-full mt-6 py-3 hover:cursor-pointer"
+                className="btn-accent w-full mt-6 py-4 hover:cursor-pointer"
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center gap-2">
@@ -289,7 +327,7 @@ export default function JobManager() {
             </form>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

@@ -3,10 +3,10 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #0f172a;
-  --color-surface: #1e293b;
+  --color-background: #020617;
+  --color-surface: #0f172a;
   --color-primary: #3b82f6;
-  --color-secondary: #8b5cf6;
+  --color-secondary: #60a5fa;
   --font-sans: "Inter", sans-serif;
 }
 
@@ -23,26 +23,68 @@
 @layer components {
   /* Forms */
   .input {
-    @apply w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all duration-300;
+    @apply w-full bg-slate-900/50 border border-slate-800 rounded-lg px-4 py-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all duration-300;
+    color-scheme: dark;
+  }
+
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    @apply cursor-pointer transition-all duration-300;
+    filter: invert(1);
   }
 
   /* Buttons */
   .btn-primary {
-    @apply w-full bg-gradient-to-r from-sky-600 to-gray-700 hover:from-primary/90 hover:to-secondary/10 text-white font-medium rounded-lg px-4 py-3 transition-all duration-300 shadow-lg shadow-primary/25 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-medium rounded-lg px-4 py-3 transition-all duration-300 shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed;
   }
   
   .btn-secondary {
-    @apply w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 hover:border-slate-600 font-medium rounded-lg px-4 py-3 transition-all duration-300;
+    @apply w-full bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800 hover:border-slate-700 font-medium rounded-lg px-4 py-3 transition-all duration-300;
   }
   
   .btn-danger {
     @apply bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-lg px-4 py-2 transition-all duration-300;
   }
 
+  .btn-accent {
+    @apply bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white hover:text-[#020617] font-bold rounded-xl px-6 py-3 transition-all duration-300 shadow-lg shadow-blue-500/20 border border-white/10 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer;
+  }
+
   /* Cards */
   .glass-card {
-    @apply bg-slate-800/40 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-xl;
+    @apply bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl;
   }
+
+  .stat-card {
+    @apply bg-slate-900/80 border border-white/5 rounded-2xl p-6 shadow-2xl transition-all duration-500 hover:scale-[1.02] hover:border-primary/30;
+  }
+
+  .status-badge {
+    @apply px-3 py-1 rounded-full text-xs font-semibold border flex items-center gap-1.5 w-fit;
+  }
+
+  .status-applied { @apply bg-blue-500/10 text-blue-400 border-blue-500/20; }
+  .status-screening { @apply bg-yellow-500/10 text-yellow-400 border-yellow-500/20; }
+  .status-interview { @apply bg-indigo-500/10 text-indigo-400 border-indigo-500/20; }
+  .status-offer { @apply bg-green-500/10 text-green-400 border-green-500/20; }
+  .status-rejected { @apply bg-red-500/10 text-red-400 border-red-500/20; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 3s ease-in-out infinite;
 }
 
 /* Custom Scrollbar */
