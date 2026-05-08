@@ -6,7 +6,7 @@ import {
 } from 'recharts';
 import {
   Briefcase, CheckCircle, Clock, XCircle, Search, Filter,
-  ChevronRight, Calendar, ExternalLink, Plus, MoreVertical, Trash2, Edit3, Bell, X
+  ChevronRight, Calendar, ExternalLink, Plus, MoreVertical, Trash2, Edit3, Bell, X, FileText
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -530,17 +530,32 @@ export default function Dashboard() {
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2 transition-opacity">
-                            <button
-                              onClick={() => {
-                                setSelectedJob(job);
-                                setReminderDate(job.reminderDate ? new Date(job.reminderDate).toISOString().slice(0, 16) : '');
-                                setShowReminderModal(true);
-                              }}
-                              className="p-2 hover:bg-yellow-500/10 rounded-lg text-slate-400 hover:text-yellow-500 transition-colors"
-                              title="Set Reminder"
-                            >
-                              <Bell className="w-4 h-4" />
-                            </button>
+                              <button
+                                onClick={() => {
+                                  const resume = job.documents?.find(doc => doc.type === 'resume');
+                                  if (resume) window.open(resume.url, '_blank');
+                                }}
+                                className={`p-2 rounded-lg transition-colors ${
+                                  job.documents?.some(doc => doc.type === 'resume')
+                                    ? "hover:bg-blue-500/10 text-slate-400 hover:text-blue-400"
+                                    : "text-slate-600 cursor-not-allowed opacity-30"
+                                }`}
+                                title={job.documents?.some(doc => doc.type === 'resume') ? "View Resume" : "No Resume Attached"}
+                                disabled={!job.documents?.some(doc => doc.type === 'resume')}
+                              >
+                                <FileText className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setSelectedJob(job);
+                                  setReminderDate(job.reminderDate ? new Date(job.reminderDate).toISOString().slice(0, 16) : '');
+                                  setShowReminderModal(true);
+                                }}
+                                className="p-2 hover:bg-yellow-500/10 rounded-lg text-slate-400 hover:text-yellow-500 transition-colors"
+                                title="Set Reminder"
+                              >
+                                <Bell className="w-4 h-4" />
+                              </button>
                             <button
                               onClick={() => navigate('/jobs', { state: { jobId: job._id } })}
                               className="p-2 hover:bg-slate-700 rounded-lg text-slate-400 hover:text-white transition-colors"
