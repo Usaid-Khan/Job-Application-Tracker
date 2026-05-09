@@ -8,14 +8,40 @@ export default function JobManager() {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState('create'); // 'create' | 'update'
   const [jobId, setJobId] = useState('');
+  const [jobNumber, setJobNumber] = useState('');
+  const [jobs, setJobs] = useState([]);
   
   useEffect(() => {
-    if (location.state?.jobId) {
-      setJobId(location.state.jobId);
+    fetchJobs();
+  }, []);
+
+  useEffect(() => {
+    if (location.state?.jobId && jobs.length > 0) {
+      const id = location.state.jobId;
+      setJobId(id);
       setActiveTab('update');
-      fetchJobDetails(location.state.jobId);
+      
+      // Find job number
+      const index = jobs.findIndex(j => j._id === id);
+      if (index !== -1) {
+        setJobNumber(index + 1);
+      }
+      
+      fetchJobDetails(id);
     }
-  }, [location.state]);
+  }, [location.state, jobs]);
+
+  const fetchJobs = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get('/api/jobs', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setJobs(res.data.data);
+    } catch (err) {
+      console.error('Error fetching jobs:', err);
+    }
+  };
 
   const fetchJobDetails = async (id) => {
     setIsLoading(true);
@@ -84,7 +110,7 @@ export default function JobManager() {
       
       if (activeTab === 'update') {
         if (!jobId) {
-          setMessage('Please provide a Job ID to update.');
+          setMessage('Please provide a Job Number to update.');
           setMessageType('error');
           setIsLoading(false);
           return;
@@ -191,15 +217,36 @@ export default function JobManager() {
             <form onSubmit={handleSubmit} className="space-y-5">
               {activeTab === 'update' && (
                 <div className="pb-4 border-b border-slate-700/50 mb-4">
-                  <label className="block text-sm font-medium text-slate-300 mb-2">Target Job ID *</label>
-                  <input
-                    type="text"
-                    required
-                    className="input"
-                    placeholder="Enter the Job ID to update"
-                    value={jobId}
-                    onChange={(e) => setJobId(e.target.value)}
-                  />
+                  <label className="block text-sm font-medium text-slate-300 mb-2">Target Job Number *</label>
+                  <div className="flex gap-3">
+                    <input
+                      type="number"
+                      required
+                      min="1"
+                      max={jobs.length}
+                      className="input w-32"
+                      placeholder="# (e.g. 1)"
+                      value={jobNumber}
+                      onChange={(e) => {
+                        const num = e.target.value;
+                        setJobNumber(num);
+                        const index = parseInt(num) - 1;
+                        if (jobs[index]) {
+                          setJobId(jobs[index]._id);
+                          fetchJobDetails(jobs[index]._id);
+                        } else {
+                          setJobId('');
+                          // Clear form if no job selected
+                          setFormData({ company: '', position: '', jobLink: '', status: 'Applied', contactPerson: '', note: '' });
+                        }
+                      }}
+                    />
+                    <div className="flex-grow bg-slate-800/30 border border-slate-700/50 rounded-lg px-4 py-3 flex items-center">
+                      <span className="text-slate-400 text-sm truncate">
+                        {jobId ? (jobs.find(j => j._id === jobId)?.company + " - " + jobs.find(j => j._id === jobId)?.position) : "Enter number to select job..."}
+                      </span>
+                    </div>
+                  </div>
                   <p className="text-xs text-slate-500 mt-2">The fields below will override the existing job data. Any file attached below will be ADDED to the existing job.</p>
                 </div>
               )}
